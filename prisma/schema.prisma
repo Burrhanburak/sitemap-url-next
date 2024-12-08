@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  extensions = [pgcrypto]
+}
+
+model Site {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  products  Product[]
+  pages     Page[]
+  categories Category[]
+  scans     ScanLog[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  imageUrl    String?
+  price       Float?
+  url         String   @unique
+  status      String   @default("active")
+  lastChecked DateTime @default(now())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id])
+  categories  Category[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  url       String    @unique
+  siteId    String
+  site      Site      @relation(fields: [siteId], references: [id])
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  title     String
+  url       String   @unique
+  type      String   // blog, static, etc.
+  status    String   @default("active")
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ScanLog {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id])
+  status    String   // success, failed
+  changes   Json?    // Store changes detected
+  startTime DateTime @default(now())
+  endTime   DateTime?
+  error     String?
+}
